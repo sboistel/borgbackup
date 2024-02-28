@@ -38,7 +38,7 @@ _prune () {
 # Run
 
 if [ "$BorgRepo" = "auto" ]; then
-    BorgRepo="/media/20104162@hq.corp.leroymerlin.com/Backup/X504292/"
+    BorgRepo="/media/20104162/Backup/X504292/"
     TargetDir="/home/20104162/"
     _checkinit
     _backup
