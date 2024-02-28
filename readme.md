@@ -1,7 +1,7 @@
 ---
 title: "Borg Backup"
 description: "Borg is a deduplicating backup program"
-tags: ["backup", "borg", "deduplication", "linux", "macos", "windows"]
+tags: ["backup", "borg", "deduplication", "linux"]
 ---
 
 ## Installation
