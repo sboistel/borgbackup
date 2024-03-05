@@ -25,7 +25,7 @@ _backup () {
     -C zstd,10  \
     --exclude "$TargetDir/.cache/*" \
     --exclude "$TargetDir/Nextcloud" \
-    $BorgRepo::$(date +%Y%m%d)-4 $TargetDir
+    $BorgRepo::$(date +%Y%m%d) $TargetDir
 }
 
 _prune () {
