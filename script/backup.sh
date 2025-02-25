@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 #############################################################
-# Author:	Samuel BOISTEL
-# Purpose:	Borg Backup Script
-# Date:	    Fev 2024
+# Author:   Samuel BOISTEL
+# Purpose:  Borg Backup Script
+# Date:     Fev 2024
 #############################################################
-set -o errexit
+
 # Variables
 BorgRepo="$1"
 TargetDir="$2"
 
 # Functions
+_help () {
+    echo "Usage: $0 [option]"
+    echo "Options:"
+    echo "  -c, --check     Check if the repository is initialized"
+    echo "  -b, --backup    Backup the docker volumes"
+    echo "  -p, --prune     Prune the repository"
+    echo "  -i, --info      Display the backup information"
+    echo "  -l, --list      List the archives in the repository"
+}
+
 _checkinit () {
     echo "Check if $BorgRepo is initialized"
     if ! borg info $BorgRepo > /dev/null 2>&1; then
@@ -18,41 +28,64 @@ _checkinit () {
     fi
 }
 
-_backup () {
-    echo "Create a new archive of $TargetDir in $BorgRepo as $(date +%Y%m%d)"
+_docker_backup () {
     borg create  \
     --stats --progress \
     -C zstd,10  \
-    --exclude "$TargetDir/.cache/*" \
-    --exclude "$TargetDir/Nextcloud" \
-    $BorgRepo::$(date +%Y%m%d) $TargetDir
+    $BorgRepo::docker_$dime /opt/docker
 }
 
 _prune () {
-    if [ "$(borg list $BorgRepo | wc -l)" -gt 5 ]; then
+    retention=6
+    if [ "$(borg list $BorgRepo | wc -l)" -gt $retention ]; then
         echo "Prune archives in $BorgRepo"
-        borg prune --keep-last 5 $BorgRepo
+        borg prune --keep-last $retention $BorgRepo
     fi
+}
+
+_info () {
+	for backup in $(borg list $BorgRepo | grep ${dime} | awk '{print $1}')
+	do
+    		borg info ${BorgRepo}::$backup >> $logfile
+	done
+	echo "###" >> $logfile
+	echo $logfile
+}
+
+_list () {
+    echo "List archives in $BorgRepo"
+    borg list $BorgRepo
 }
 
 # Run
 
-if [ "$BorgRepo" = "auto" ]; then
-    BorgRepo="/media/toto/Backup/tulipe/"
-    TargetDir="/home/toto/"
-    _checkinit
-    _backup
-    _prune
-elif [ -z "$BorgRepo" ] || [ -z "$TargetDir" ]; then
-    echo "Usage: $0 <BorgRepo> <TargetDir>"
-    echo "sh BorgBackup.sh /media/toto/Backup/tulipe /home/toto"
-    echo "Flemard:"
-    echo "sh BorgBackup.sh auto"
+if [ -z "$1" ]; then
+    _help
     exit 1
 else
-    _checkinit
-    _backup
-    _prune
+    case "$1" in
+        -c|--check)
+            _checkinit
+            ;;
+        -b|--backup)
+            _checkinit
+            _docker_backup
+            _prune
+            _info
+            ;;
+        -p|--prune)
+            _prune
+            ;;
+        -i|--info)
+            _info
+            ;;
+        -l|--list)
+            _list
+            ;;
+        *)
+            _help
+            exit 1
+            ;;
+    esac
 fi
-
 # END
